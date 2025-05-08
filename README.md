@@ -10,12 +10,12 @@
   [![Forks](https://img.shields.io/github/forks/badges/shields?style=flat)](https://github.com/badges/shields/network/members)
 
 ### To Do：
-- 可选不同的徽章风格
-- 优化徽章展示逻辑
-  - 区分 no releases 和 repo not found
-  - 仓库无 release 和 tag 时显示 `latest commite` 徽章
-- 可存储几个常用静态徽章
-- 可调整徽章展示顺序，拖动排序或其它
+- [ ] 可选不同的徽章风格
+- [ ] 优化徽章展示逻辑
+  - [ ] 区分 no releases 和 repo not found
+  - [ ] 仓库无 release 和 tag 时显示 `latest commite` 徽章
+- [ ] 可存储几个常用静态徽章
+- [ ] 可调整徽章展示顺序，拖动排序或其它
 ### 更新日志
 
 
