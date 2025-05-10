@@ -1,7 +1,9 @@
 # MdRepo
 使用[ Shields.io](https://shields.io/)服务，生成动态、静态徽章，具备一系列自定义功能。
 
- [shields](https://github.com/badges/shields)
+
+
+**[shields](https://github.com/badges/shields)徽章就像下面这样**
  
   [![Stars](https://img.shields.io/github/stars/badges/shields?style=flat)](https://github.com/badges/shields/stargazers)
   [![Version](https://img.shields.io/github/v/tag/badges/shields?label=Version&style=flat)](https://github.com/badges/shields/releases)
@@ -14,6 +16,7 @@
 - [ ] 优化徽章展示逻辑
   - [ ] 区分 no releases 和 repo not found
   - [ ] 仓库无 release 和 tag 时显示 `latest commite` 徽章
+  - [ ] 处理最新版本发布时间、归档时间、最新提交时间的展示逻辑
 - [ ] 可存储几个常用静态徽章
 - [ ] 可调整徽章展示顺序，拖动排序或其它
 ### 更新日志
