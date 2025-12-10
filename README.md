@@ -11,6 +11,22 @@
   [![License](https://img.shields.io/github/license/badges/shields?style=flat)](https://github.com/badges/shields/blob/master/LICENSE)
   [![Forks](https://img.shields.io/github/forks/badges/shields?style=flat)](https://github.com/badges/shields/network/members)
 
+
+
+## 功能
+
+- [![Version](https://img.shields.io/static/v1?label=Version&message=%E9%A2%84%E8%A7%88&color=brightgreen&style=flat)]()  ：读取 tag 标签，获取版本号
+
+- 时间徽章
+  - 首先检查仓库是否归档（Archived），归档则显示归档时间：[![Archived](https://img.shields.io/static/v1?label=Archived&message=%E9%A2%84%E8%A7%88&color=red&style=flat)]()
+  - 未归档则检查发布（release），有发布则显示最新发布时间：[![Latest Release](https://img.shields.io/static/v1?label=Latest%20Release&message=%E9%A2%84%E8%A7%88&color=brightgreen&style=flat)]()
+  - 没有发布，则显示最新提交（commit）时间：[![Latest Commit](https://img.shields.io/static/v1?label=Latest%20Commit&message=%E9%A2%84%E8%A7%88&color=brightgreen&style=flat)]()
+  - 综上，若时间为 Latease Commit ,而版本显示了版本号，则说明该 repo 只有 tag 没有 release
+
+
+
+
+
 ### To Do：
 
 - [x] 优化徽章展示逻辑
