@@ -3,115 +3,165 @@
 <head>
     <title>GitHub 徽章生成器</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .options { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
-        .repo-input { width: 100%; height: 150px; margin: 10px 0; border-radius: 6px; border: 1px solid #ddd; padding: 8px; font-family: monospace; /* 使用等宽字体更适合代码 */ }
-        .result { margin-top: 30px; }
-        .badge-option { margin: 8px 0; padding: 6px 12px; background: #f8f9fa; border-radius: 6px; transition: background 0.2s; }
-        .badge-option:hover { background: #e9ecef; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; border-radius: 8px; overflow: hidden; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; /* 单元格顶部对齐 */ }
-        th { background-color: #f2f2f2; }
-        .hidden { display: none; }
-        .copy-btn { margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
-        .copy-btn:hover { background: #45a049; transform: translateY(-1px); }
-        .token-group { margin-bottom: 15px; }
-        .token-group input { width: 300px; margin-right: 10px; border-radius: 6px; padding: 6px; border: 1px solid #ddd; }
-        .status-msg { margin: 10px 0; padding: 8px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; }
-        .error-msg { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .label-text { cursor: pointer; display: inline-block; margin-left: 5px; }
-        .input-group { margin: 15px 0; }
-        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .tab-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: -1px;
+        /* 强制显示滚动条，防止页面左右横跳 */
+        html { overflow-y: scroll; }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            margin: 20px; 
+            background: #f0f2f5; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            min-height: 600px; 
             position: relative;
-            z-index: 1;
         }
-        .tab-btn {
-            padding: 12px 24px;
-            background: #f0f0f0;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            color: #666;
-        }
-        .tab-btn.active {
-            background: #fff;
-            color: #4CAF50;
-            border-color: #ddd;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            transform: translateY(1px);
-        }
-        .tab-btn:hover:not(.active) {
-            background: #e8e8e8;
-            color: #333;
-        }
-        .tab-content {
-            opacity: 0;
-            visibility: hidden;
-            height: 0;
-            padding: 0;
-            border: 1px solid #ddd;
-            border-radius: 0 8px 8px 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        .tab-content.active {
-            opacity: 1;
-            visibility: visible;
-            height: auto;
-            padding: 20px;
-            margin-top: -1px;
-        }
-        .preview-container {
-            margin: 20px 0;
+        
+        h1 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 15px; font-size: 24px; }
+        h3 { margin-top: 25px; margin-bottom: 15px; font-size: 18px; color: #444; border-left: 4px solid #4CAF50; padding-left: 10px; }
+
+        /* --- 拖拽排序与自动编号样式 --- */
+        #badgeContainer {
+            counter-reset: badge-order;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
             padding: 15px;
             background: #f8f9fa;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
-            text-align: center;
-            border: 1px solid #eee;
         }
-        .live-preview {
-            display: inline-block;
-            margin: 10px 0;
-        }
-        input[type="text"], input[type="password"], select { /* 应用到 password 类型 */
-            border-radius: 6px !important;
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-        .status-msg {
-            transition: all 0.3s ease;
-        }
-        .columns-container {
+
+        .badge-option { 
+            position: relative;
+            padding: 10px 12px 10px 15px; 
+            background: #fff; 
+            border-radius: 6px; 
+            border: 1px solid #dee2e6;
+            cursor: grab;
             display: flex;
+            align-items: center;
+            user-select: none;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        #badgeContainer .badge-option { counter-increment: badge-order; }
+        #badgeContainer .badge-option::before {
+            content: counter(badge-order);
+            position: absolute;
+            top: -6px; left: -6px;
+            width: 18px; height: 18px;
+            background-color: #6c757d;
+            color: white;
+            border-radius: 50%;
+            font-size: 10px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .badge-option:hover { border-color: #4CAF50; background-color: #f8fff9; transform: translateY(-1px); }
+        .badge-option.dragging { opacity: 0.5; background: #e9ecef; border: 2px dashed #adb5bd; }
+        .drag-handle { margin-right: 10px; color: #ced4da; cursor: grab; font-size: 16px; }
+        
+        /* --- 布局样式 --- */
+        .control-panel {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .output-settings-bar {
+            display: flex;
+            flex-wrap: wrap;
             gap: 30px;
-            justify-content: space-between;
-            flex-wrap: wrap; /* 允许在小屏幕上换行 */
+            align-items: center;
         }
-        .badge-column {
-            flex: 1;
-            min-width: 280px;
+        
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease;
         }
-        #copySuccess {
-            padding: 8px;
-            margin-top: 10px;
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            border-radius: 4px;
+        
+        .setting-group.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
+        .setting-label { font-weight: 600; color: #555; font-size: 14px; }
+        .radio-group label { margin-right: 10px; cursor: pointer; font-size: 14px; }
+
+        .custom-badge-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .input-block { margin-bottom: 12px; }
+        .input-block label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #666; }
+
+        input[type="text"], input[type="password"], select, textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus { outline: none; border-color: #4CAF50; box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1); }
+        textarea.repo-input { height: 120px; font-family: Consolas, monospace; }
+
+        .preview-container { margin: 0 0 20px 0; padding: 20px; background: #fff; border: 1px dashed #ced4da; border-radius: 8px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 60px; }
+
+        /* --- 标签页与动画样式 --- */
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 0; border-bottom: 1px solid #dee2e6; }
+        .tab-btn { padding: 10px 20px; background: transparent; border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; color: #6c757d; margin-bottom: -1px; transition: all 0.3s; }
+        .tab-btn:hover { color: #333; background: #f8f9fa; }
+        .tab-btn.active { background: white; color: #4CAF50; border-color: #dee2e6; border-bottom-color: white; }
+        
+        .tab-content { 
+            display: none; 
+            padding-top: 20px; 
+        }
+        
+        .tab-content.active { 
+            display: block; 
+            animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .action-buttons { margin-top: 15px; }
+        .copy-btn { padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: transform 0.1s; }
+        .copy-btn:hover { background: #45a049; transform: translateY(-1px); }
+        .copy-btn:active { transform: translateY(0); }
+
+        .token-group { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: #e8f5e9; padding: 10px; border-radius: 6px; border: 1px solid #c8e6c9; }
+        .token-group input { width: 300px; border-color: #a5d6a7; }
+
+        .status-msg { margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 14px; animation: fadeIn 0.3s ease; }
+        .hidden { display: none; }
+        #loading { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+        #errorMsg { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #copySuccess { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+        @media (max-width: 600px) {
+            .custom-badge-layout { grid-template-columns: 1fr; }
+            .output-settings-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .token-group { flex-direction: column; align-items: flex-start; }
+            .token-group input { width: 100%; }
         }
     </style>
 </head>
-<body onload="loadSavedSettings()">
+<body>
 <div class="container">
-    <h1 style="color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">GitHub 徽章生成器</h1>
+    <h1>GitHub 徽章生成器</h1>
     <div class="tab-buttons">
         <button class="tab-btn active" onclick="switchTab('repo')">Repo徽章</button>
         <button class="tab-btn" onclick="switchTab('custom')">自定义徽章</button>
@@ -120,593 +170,422 @@
     <!-- Repo徽章内容 -->
     <div class="tab-content active" id="repoTab">
         <div class="token-group">
-            <label>
-                GitHub Token (可选): <!-- 明确是可选的 -->
-                <input type="password" id="githubToken" placeholder="ghp_... (提高API速率限制)"> <!-- 增加提示 -->
-                <button onclick="saveToken()" class="copy-btn">确定/更新</button> <!-- 更新按钮文本 -->
-            </label>
+            <span style="font-weight:600; color:#2e7d32;">GitHub Token:</span>
+            <input type="password" id="githubToken" placeholder="ghp_... (避免API限制报错)" style="flex-grow:1; max-width:350px;">
+            <button onclick="saveToken()" class="copy-btn" style="padding:6px 12px; font-size:12px;">保存设置</button>
+            <span style="font-size:12px; color:#666;">(可选，仅保存在本地)</span>
         </div>
-        <h3>Repo徽章选项</h3>
-        <div class="columns-container">
-            <div class="badge-column">
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showStars"><span class="label-text">Stars</span></label>
+        
+        <h3>
+            选择显示的徽章
+            <span style="font-size: 12px; font-weight: normal; color: #888; margin-left: 10px;">
+                (按住 <span style="color:#adb5bd">::</span> 拖动可调整顺序)
+            </span>
+        </h3>
+        
+        <div id="badgeContainer">
+            <div class="badge-option" draggable="true" data-id="showStars"><span class="drag-handle">::</span><label><input type="checkbox" id="showStars"><span class="label-text">Stars</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showVersion"><span class="drag-handle">::</span><label><input type="checkbox" id="showVersion"><span class="label-text">Version</span></label></div>
+            <!-- 保留了日期的说明 -->
+            <div class="badge-option" draggable="true" data-id="showDate"><span class="drag-handle">::</span><label><input type="checkbox" id="showDate"><span class="label-text">Date (发布/提交/归档)</span></label></div> 
+            <div class="badge-option" draggable="true" data-id="showLanguage"><span class="drag-handle">::</span><label><input type="checkbox" id="showLanguage"><span class="label-text">Language</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showLicense"><span class="drag-handle">::</span><label><input type="checkbox" id="showLicense"><span class="label-text">License</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showDownloads"><span class="drag-handle">::</span><label><input type="checkbox" id="showDownloads"><span class="label-text">Downloads</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showDocker"><span class="drag-handle">::</span><label><input type="checkbox" id="showDocker"><span class="label-text">Docker Pulls</span></label></div>
+            <!-- 采用了方案 C: 仓库全名 (user/repo) -->
+            <div class="badge-option" draggable="true" data-id="showUser"><span class="drag-handle">::</span><label><input type="checkbox" id="showUser"><span class="label-text">仓库全名 (user/repo)</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showForks"><span class="drag-handle">::</span><label><input type="checkbox" id="showForks"><span class="label-text">Forks</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showIssues"><span class="drag-handle">::</span><label><input type="checkbox" id="showIssues"><span class="label-text">Issues</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showBuild"><span class="drag-handle">::</span><label><input type="checkbox" id="showBuild"><span class="label-text">Build</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showSize"><span class="drag-handle">::</span><label><input type="checkbox" id="showSize"><span class="label-text">Size</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showFollowers"><span class="drag-handle">::</span><label><input type="checkbox" id="showFollowers"><span class="label-text">Followers</span></label></div>
+            <div class="badge-option" draggable="true" data-id="showWatchers"><span class="drag-handle">::</span><label><input type="checkbox" id="showWatchers"><span class="label-text">Watchers</span></label></div>
+        </div>
+
+        <h3>输出设置</h3>
+        <div class="control-panel">
+            <div class="output-settings-bar">
+                <div class="setting-group">
+                    <span class="setting-label">输出格式:</span>
+                    <div class="radio-group">
+                        <label><input type="radio" name="format" value="list" onchange="updateUIState()"> 无序列表</label>
+                        <label><input type="radio" name="format" value="table" checked onchange="updateUIState()"> Markdown 表格</label>
+                    </div>
                 </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showVersion"><span class="label-text">最新版本(Tag)</span></label>
+                <div class="setting-group" id="headerOptionGroup">
+                    <label style="cursor:pointer; display:flex; align-items:center;">
+                        <input type="checkbox" id="showHeader" checked style="margin-right:5px;"> 
+                        <span style="font-size:14px;">生成表头 (仅表格模式)</span>
+                    </label>
                 </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showDate"><span class="label-text">日期 (发布/提交/归档)</span></label>
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showLanguage"><span class="label-text">编程语言</span></label>
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showLicense"><span class="label-text">开源许可</span></label>
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showDownloads"><span class="label-text">下载量 (Releases)</span></label> <!-- 明确是Releases的下载量 -->
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showDocker"><span class="label-text">Docker Pulls</span></label>
+                <div class="setting-group" style="margin-left: auto;">
+                    <span class="setting-label">徽章风格:</span>
+                    <select id="repoStyle" onchange="saveSettings()" style="width:160px;">
+                        <option value="flat">Flat (默认扁平)</option>
+                        <option value="flat-square">Flat Square (直角)</option>
+                        <option value="for-the-badge">For-The-Badge (大号)</option>
+                        <option value="plastic">Plastic (3D立体)</option>
+                        <option value="social">Social (社交风格)</option>
+                    </select>
                 </div>
             </div>
-            <div class="badge-column">
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showUser"><span class="label-text">显示 User/Org</span></label> <!-- 更准确的描述 -->
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showForks"><span class="label-text">Forks</span></label>
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showIssues"><span class="label-text">Issues</span></label>
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showBuild"><span class="label-text">构建状态 (Actions)</span></label> <!-- 明确是Actions -->
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showSize"><span class="label-text">仓库大小</span></label>
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showFollowers"><span class="label-text">Followers (User/Org)</span></label> <!-- 明确是User/Org的 -->
-                </div>
-                <div class="badge-option">
-                    <label><input type="checkbox" id="showWatchers"><span class="label-text">Watchers</span></label>
-                </div>
-            </div>
         </div>
-        <h3>输出格式</h3>
-        <div class="input-group">
-            <label>选择输出格式：</label>
-            <label><input type="radio" name="format" value="list"><span class="label-text">无序列表</span></label>
-            <label><input type="radio" name="format" value="table" checked><span class="label-text">Markdown 表格</span></label>
+
+        <div class="input-block">
+            <label>输入仓库地址（每行一个，格式：user/repo）：</label>
+            <textarea class="repo-input" id="repoInput" placeholder="例如：
+octocat/Hello-World
+microsoft/vscode"></textarea>
         </div>
-        <div class="badge-option">
-            <label><input type="checkbox" id="showHeader" checked><span class="label-text">生成表头（仅表格模式）</span></label> <!-- 默认勾选表头 -->
-        </div>
-        <div class="input-group" id="repoInputGroup">
-            <label>输入仓库地址（每行一个，格式：user/repo 或 org/repo）：</label>
-            <textarea class="repo-input" id="repoInput" placeholder="例如：octocat/Hello-World&#10;microsoft/vscode"></textarea> <!-- 增加示例和换行 -->
-        </div>
+        
         <div class="action-buttons">
-            <button onclick="generateBadges()" class="copy-btn">生成徽章</button> <!-- 更明确的按钮文本 -->
+            <button onclick="generateBadges()" class="copy-btn">生成徽章</button>
         </div>
-        <div class="output-section">
-            <textarea id="outputRepo" class="repo-input" readonly placeholder="生成的 Markdown 将显示在此处..."></textarea> <!-- 增加 placeholder -->
+
+        <div style="margin-top:20px;">
+            <label style="font-weight:600; display:block; margin-bottom:5px;">生成结果:</label>
+            <textarea id="outputRepo" class="repo-input" readonly placeholder="Markdown 代码将显示在这里..."></textarea>
             <div class="action-buttons">
-                <button onclick="copyContent('repo')" class="copy-btn">复制 Markdown</button> <!-- 更明确的按钮文本 -->
+                <button onclick="copyContent('repo')" class="copy-btn" style="background:#2196F3;">复制结果</button>
             </div>
         </div>
     </div>
 
     <!-- 自定义徽章内容 -->
     <div class="tab-content" id="customTab">
-        <h3>自定义静态徽章 (via Shields.io)</h3>
+        <h3>自定义徽章预览</h3>
         <div class="preview-container">
-            <div class="live-preview">
-                <img id="badgePreview" class="preview-badge" src="https://img.shields.io/static/v1?label=示例&message=预览&color=brightgreen&style=flat"> <!-- 默认使用 flat 样式 -->
+            <img id="badgePreview" src="https://img.shields.io/static/v1?label=示例&message=预览&color=brightgreen&style=flat">
+        </div>
+
+        <h3>徽章参数</h3>
+        <div class="control-panel">
+            <div class="custom-badge-layout">
+                <div class="layout-left">
+                    <div class="input-block">
+                        <label>左侧文本 (Label):</label>
+                        <input type="text" id="customLabel" placeholder="例如: version" oninput="updatePreview()">
+                    </div>
+                    <div class="input-block">
+                        <label>右侧文本 (Message):</label>
+                        <input type="text" id="customMessage" placeholder="例如: 1.0.0" oninput="updatePreview()">
+                    </div>
+                </div>
+                <div class="layout-right">
+                    <div class="input-block">
+                        <label>颜色 (Color):</label>
+                        <select id="customColor" onchange="updatePreview()">
+                            <option value="brightgreen">亮绿 (brightgreen)</option>
+                            <option value="green">深绿 (green)</option>
+                            <option value="yellow">黄色 (yellow)</option>
+                            <option value="yellowgreen">黄绿 (yellowgreen)</option>
+                            <option value="orange">橙色 (orange)</option>
+                            <option value="red">红色 (red)</option>
+                            <option value="blue">蓝色 (blue)</option>
+                            <option value="lightgrey">浅灰 (lightgrey)</option>
+                            <option value="blueviolet">蓝紫 (blueviolet)</option>
+                            <option value="ff69b4">粉色 (ff69b4)</option>
+                        </select>
+                    </div>
+                    <div class="input-block">
+                        <label>风格 (Style):</label>
+                        <select id="customStyle" onchange="updatePreview()">
+                            <option value="flat">Flat (默认扁平)</option>
+                            <option value="flat-square">Flat Square (直角)</option>
+                            <option value="for-the-badge">For-The-Badge (大号)</option>
+                            <option value="plastic">Plastic (3D立体)</option>
+                            <option value="social">Social (社交风格)</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="input-group">
-            <label>左侧文本 (Label): <input type="text" id="customLabel" placeholder="例如: version" oninput="updatePreview()"></label>
-            <label>右侧文本 (Message): <input type="text" id="customMessage" placeholder="例如: 1.0.0" oninput="updatePreview()"></label>
-        </div>
-        <div class="input-group">
-            <label>颜色 (Color):
-                <select id="customColor" onchange="updatePreview()">
-                    <option value="brightgreen">亮绿 (brightgreen)</option>
-                    <option value="green">深绿 (green)</option>
-                    <option value="yellow">黄色 (yellow)</option>
-                    <option value="yellowgreen">黄绿 (yellowgreen)</option>
-                    <option value="orange">橙色 (orange)</option>
-                    <option value="red">红色 (red)</option>
-                    <option value="blue">蓝色 (blue)</option>
-                    <option value="lightgrey">浅灰 (lightgrey)</option>
-                    <option value="blueviolet">蓝紫 (blueviolet)</option>
-                    <!-- 可以添加更多 Shields.io 支持的颜色名或十六进制颜色 -->
-                    <option value="ff69b4">粉色 (ff69b4)</option>
-                </select>
-            </label>
-            <!-- 可以添加更多自定义选项，如 style, logo 等 -->
-        </div>
-        <div class="action-buttons">
-             <!-- 自定义徽章不需要再次生成，因为预览就是结果 -->
-             <!-- <button onclick="generateBadges()" class="copy-btn">生成</button> -->
-        </div>
-        <div class="output-section">
-             <label>生成的 Markdown:</label>
-            <textarea id="outputCustom" class="repo-input" readonly placeholder="自定义徽章的 Markdown 将显示在此处..."></textarea>
+
+        <div style="margin-top:20px;">
+            <label style="font-weight:600; display:block; margin-bottom:5px;">生成代码:</label>
+            <textarea id="outputCustom" class="repo-input" style="height:80px;" readonly placeholder="徽章代码..."></textarea>
             <div class="action-buttons">
-                <button onclick="copyContent('custom')" class="copy-btn">复制 Markdown</button>
+                <button onclick="copyContent('custom')" class="copy-btn" style="background:#2196F3;">复制结果</button>
             </div>
         </div>
     </div>
 
-    <!-- 公共状态提示 -->
-    <div class="status-msg hidden" id="loading">正在从 GitHub API 获取信息并生成徽章，请稍候...</div> <!-- 更详细的加载提示 -->
-    <div class="status-msg error-msg hidden" id="errorMsg"></div>
-    <div id="copySuccess" class="status-msg hidden">内容已复制到剪贴板！</div>
+    <!-- 状态提示 -->
+    <div class="status-msg hidden" id="loading">⏳ 正在请求 GitHub API，请稍候...</div>
+    <div class="status-msg hidden" id="errorMsg"></div>
+    <div class="status-msg hidden" id="copySuccess">✅ 内容已复制到剪贴板！</div>
 </div>
 
 <script>
-    // 切换选项卡
+    let savedToken = '';
+
+    // --- 拖拽逻辑 ---
+    const container = document.getElementById('badgeContainer');
+    let dragSrcEl = null;
+
+    function initDragAndDrop() {
+        const items = container.querySelectorAll('.badge-option');
+        items.forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragenter', handleDragEnter);
+            item.addEventListener('dragover', handleDragOver);
+            item.addEventListener('dragleave', handleDragLeave);
+            item.addEventListener('drop', handleDrop);
+            item.addEventListener('dragend', handleDragEnd);
+        });
+    }
+
+    function handleDragStart(e) {
+        this.classList.add('dragging');
+        dragSrcEl = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+    function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+    function handleDragEnter(e) { this.classList.add('over'); }
+    function handleDragLeave(e) { this.classList.remove('over'); }
+    function handleDrop(e) {
+        if (e.stopPropagation) e.stopPropagation();
+        if (dragSrcEl !== this) {
+            const items = [...container.querySelectorAll('.badge-option')];
+            const srcIndex = items.indexOf(dragSrcEl);
+            const targetIndex = items.indexOf(this);
+            srcIndex < targetIndex ? this.after(dragSrcEl) : this.before(dragSrcEl);
+            saveSettings();
+        }
+        return false;
+    }
+    function handleDragEnd() {
+        this.classList.remove('dragging');
+        container.querySelectorAll('.badge-option').forEach(item => item.classList.remove('over'));
+    }
+
+    // --- 逻辑功能 ---
     function switchTab(tabName) {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            btn.style.transform = 'translateY(0)';
-        });
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        const activeBtn = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
-        const activeContent = document.getElementById(`${tabName}Tab`);
-        activeBtn.classList.add('active');
-        activeBtn.style.transform = 'translateY(1px)';
-        setTimeout(() => {
-            activeContent.classList.add('active');
-            // 如果切换到自定义，立即生成/更新Markdown
-            if (tabName === 'custom') {
-                generateCustomBadgeMarkdown();
-            }
-        }, 10);
-        // 总是尝试更新预览，但内部会判断是否在自定义Tab
-        updatePreview();
-        const repoInputGroup = document.getElementById('repoInputGroup');
-        // 确保 repoInputGroup 存在再操作
-        if (repoInputGroup) {
-            repoInputGroup.style.display = tabName === 'repo' ? 'block' : 'none';
-        }
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+        if (tabName === 'custom') updatePreview();
     }
 
-    // 更新自定义徽章的实时预览，并生成Markdown
+    // UI 状态更新
+    function updateUIState() {
+        const format = document.querySelector('input[name="format"]:checked').value;
+        const headerGroup = document.getElementById('headerOptionGroup');
+        const headerInput = document.getElementById('showHeader');
+
+        if (format === 'list') {
+            headerGroup.classList.add('disabled');
+            headerInput.disabled = true;
+        } else {
+            headerGroup.classList.remove('disabled');
+            headerInput.disabled = false;
+        }
+        saveSettings(); 
+    }
+
     function updatePreview() {
-        if (document.querySelector('.tab-btn.active')?.getAttribute('onclick') !== "switchTab('custom')") return; // 确保在自定义Tab
-        generateCustomBadgeMarkdown(); // 调用统一的函数
-    }
-
-    // **新增**: 单独处理自定义徽章生成和预览更新的函数
-    function generateCustomBadgeMarkdown() {
-        const label = document.getElementById('customLabel').value.trim() || '示例';
-        const message = document.getElementById('customMessage').value.trim() || '预览';
+        const label = document.getElementById('customLabel').value.trim() || 'Label';
+        const message = document.getElementById('customMessage').value.trim() || 'Message';
         const color = document.getElementById('customColor').value;
-        // 默认使用 flat 样式，可以根据需要添加样式选择
-        const style = 'flat';
-        // 构建预览和实际使用的URL
+        const style = document.getElementById('customStyle').value;
         const badgeUrl = `https://img.shields.io/static/v1?label=${encodeURIComponent(label)}&message=${encodeURIComponent(message)}&color=${color}&style=${style}`;
-        // 更新预览图片
-        const previewImg = document.getElementById('badgePreview');
-        if (previewImg) previewImg.src = badgeUrl;
-        // 生成Markdown代码
-        const markdown = `[![${label}](${badgeUrl})]()`; // 默认无链接，用户可自行添加
-        // 更新输出文本区域
-        const outputCustom = document.getElementById('outputCustom');
-        if (outputCustom) outputCustom.value = markdown;
+        
+        document.getElementById('badgePreview').src = badgeUrl;
+        document.getElementById('outputCustom').value = `[![${label}](${badgeUrl})]()`;
     }
 
-
-    // 异步生成 Repo 徽章
     async function generateBadges() {
-        const activeTabButton = document.querySelector('.tab-btn.active');
-        // 仅当在 Repo Tab 时执行 Repo 徽章生成逻辑
-        if (!activeTabButton || activeTabButton.getAttribute('onclick') !== "switchTab('repo')") {
-            // 如果在自定义Tab点击生成（虽然按钮已移除，但以防万一），调用自定义生成逻辑
-            if (activeTabButton && activeTabButton.getAttribute('onclick') === "switchTab('custom')") {
-                generateCustomBadgeMarkdown();
-            }
-            return;
-        }
-
         const output = document.getElementById('outputRepo');
-        output.value = ''; // 清空Repo输出
+        output.value = '';
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        loading.classList.remove('hidden');
+        errorMsg.classList.add('hidden');
 
         try {
-            document.getElementById('errorMsg').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
-
-            const repos = document.getElementById('repoInput').value.split('\n').map(r => r.trim()).filter(r => r && r.includes('/')); // 过滤空行和无效格式
+            const repos = document.getElementById('repoInput').value.split('\n').map(r => r.trim()).filter(r => r && r.includes('/'));
             if (repos.length === 0) throw new Error('请输入至少一个有效的仓库地址 (格式: user/repo)');
 
-            // 使用内存中最新的 savedToken
             const headers = savedToken ? { 'Authorization': `token ${savedToken}`, 'Accept': 'application/vnd.github.v3+json' } : {'Accept': 'application/vnd.github.v3+json'};
             const results = [];
 
-            // 使用 Promise.allSettled 来并行处理所有仓库请求，提高效率
             const promises = repos.map(async (repo) => {
-                let repoData = null;
-                let latestReleaseExists = false;
-                let buildStatus = '';
-                let dockerRepo = '';
-                let fetchError = null;
-
+                let repoData = null, latestReleaseExists = false, buildStatus = '', dockerRepo = '', fetchError = null;
                 try {
-                    // 1. 获取仓库基本信息
-                    const [user, repoName] = repo.split('/'); // 已在上面过滤保证含'/'
                     const repoResponse = await fetch(`https://api.github.com/repos/${repo}`, { headers });
-                    if (!repoResponse.ok) {
-                        const errorData = await repoResponse.json().catch(() => ({ message: repoResponse.statusText }));
-                        throw new Error(`获取 ${repo} 信息失败: ${repoResponse.status} ${errorData.message || repoResponse.statusText}`);
-                    }
+                    if (!repoResponse.ok) throw new Error(repoResponse.statusText);
                     repoData = await repoResponse.json();
 
-                    // 并行获取 Release 和 Actions (如果需要)
-                    const checksToRun = [];
-                    // 2. 检查最新发布 (如果需要日期且未归档)
+                    const checks = [];
                     if (!repoData.archived && document.getElementById('showDate').checked) {
-                        checksToRun.push(
-                            fetch(`https://api.github.com/repos/${repo}/releases/latest`, { headers })
-                                .then(res => {
-                                    if (res.ok) latestReleaseExists = true;
-                                    else if (res.status !== 404) console.warn(`检查 ${repo} 最新发布时遇到问题: ${res.status}`);
-                                })
-                                .catch(err => console.warn(`检查 ${repo} 最新发布时网络错误:`, err))
-                        );
+                        checks.push(fetch(`https://api.github.com/repos/${repo}/releases/latest`, { headers }).then(r => { if(r.ok) latestReleaseExists=true; }).catch(()=>{}));
                     }
-                    // 3. 获取构建状态 (如果需要)
                     if (document.getElementById('showBuild').checked) {
-                         checksToRun.push(
+                         checks.push(
                             fetch(`https://api.github.com/repos/${repo}/actions/workflows`, { headers })
-                                .then(res => res.ok ? res.json() : Promise.reject(new Error(`获取workflows失败: ${res.status}`)))
-                                .then(workflowsData => {
-                                    const buildWorkflow = workflowsData.workflows.find(wf => wf.name.toLowerCase().includes('build') || wf.path.includes('build')); // 更宽松的查找
-                                    if (buildWorkflow) {
-                                        return fetch(`https://api.github.com/repos/${repo}/actions/workflows/${buildWorkflow.id}/runs?per_page=1`, { headers });
-                                    }
-                                    return null; // 没有找到 build workflow
+                                .then(r => r.ok?r.json():Promise.reject())
+                                .then(d => {
+                                    const wf = d.workflows.find(w => w.name.toLowerCase().includes('build') || w.path.includes('build'));
+                                    if(wf) return fetch(`https://api.github.com/repos/${repo}/actions/workflows/${wf.id}/runs?per_page=1`, { headers });
                                 })
-                                .then(runsResp => runsResp && runsResp.ok ? runsResp.json() : null)
-                                .then(runs => {
-                                    if (runs && runs.workflow_runs.length > 0) {
-                                        const latestRun = runs.workflow_runs[0];
-                                        buildStatus = latestRun.status === 'completed' ? latestRun.conclusion : latestRun.status;
-                                    }
-                                })
-                                .catch(err => console.warn(`无法获取 ${repo} 的构建状态:`, err))
+                                .then(r => r&&r.ok?r.json():null)
+                                .then(d => { if(d&&d.workflow_runs[0]) buildStatus = d.workflow_runs[0].conclusion || d.workflow_runs[0].status; })
+                                .catch(()=>{})
                          );
                     }
+                    await Promise.allSettled(checks);
 
-                    // 等待 Release 和 Actions 的检查完成
-                    await Promise.allSettled(checksToRun);
-
-
-                    // 4. 获取Docker仓库名 (如果需要)
                     if (document.getElementById('showDocker').checked) {
-                        const description = repoData.description || '';
-                        // 尝试匹配 Docker Hub 链接 或 常见的 user/repo 格式
-                        const dockerMatch = description.match(/(?:docker\.io\/|hub\.docker\.com\/r\/)([^\s/]+(?:\/[^\s/]+)?)/i);
-                        if (dockerMatch) {
-                            dockerRepo = dockerMatch[1];
-                        } else {
-                            dockerRepo = repo; // 默认尝试 user/repo
-                        }
+                        const m = (repoData.description||'').match(/(?:docker\.io\/|hub\.docker\.com\/r\/)([^\s/]+(?:\/[^\s/]+)?)/i);
+                        dockerRepo = m ? m[1] : repo;
                     }
-
-                } catch (error) {
-                    fetchError = error.message;
-                    console.error(`处理仓库 ${repo} 时出错:`, error);
-                }
-
-                // 返回单个仓库的处理结果
-                return {
-                    repo,
-                    repoData,
-                    latestReleaseExists,
-                    buildStatus,
-                    dockerRepo,
-                    error: fetchError
-                };
+                } catch (e) { fetchError = e.message; }
+                return { repo, repoData, latestReleaseExists, buildStatus, dockerRepo, error: fetchError };
             });
 
-            // 等待所有仓库处理完成
-            const settledResults = await Promise.allSettled(promises);
-
-            // 整理结果，处理 promise 拒绝的情况
-            settledResults.forEach(settledResult => {
-                if (settledResult.status === 'fulfilled') {
-                    results.push(settledResult.value);
-                } else {
-                    // 如果整个仓库处理 Promise 被拒绝（不太可能发生在此结构中，除非 fetch 基础信息就失败），记录错误
-                    console.error("仓库处理 Promise 失败:", settledResult.reason);
-                    // 可以尝试从 reason 中提取 repo 名称并添加错误记录
-                    // results.push({ repo: '未知仓库', error: settledResult.reason?.message || '处理失败' });
-                }
-            });
-
-            // 使用收集到的信息渲染结果
+            const settled = await Promise.allSettled(promises);
+            settled.forEach(s => { if(s.status === 'fulfilled') results.push(s.value); });
             renderResults(results, output);
 
-        } catch (globalError) {
-            showError(globalError.message);
-            console.error("生成徽章时发生全局错误:", globalError);
+        } catch (err) {
+            errorMsg.textContent = "错误: " + err.message;
+            errorMsg.classList.remove('hidden');
         } finally {
-            document.getElementById('loading').classList.add('hidden');
-            // Repo 徽章生成后不需要保存设置，设置在用户交互时已保存
-            // saveSettings();
+            loading.classList.add('hidden');
         }
     }
 
-    let savedToken = ''; // 存储加载的Token
-
-    // 页面加载时加载保存的设置
-    function loadSavedSettings() {
-        const savedSettings = JSON.parse(localStorage.getItem('ghBadgeSettings')) || {};
-        if (savedSettings.token) {
-            document.getElementById('githubToken').value = savedSettings.token;
-            savedToken = savedSettings.token;
-        }
-        // 加载复选框状态
-        const checkboxes = ['showUser', 'showStars', 'showVersion', 'showDate',
-                           'showSize', 'showLanguage', 'showLicense', 'showDownloads',
-                           'showIssues', 'showBuild', 'showDocker', 'showFollowers',
-                           'showForks', 'showWatchers', 'showHeader'];
-        checkboxes.forEach(id => {
-            const elem = document.getElementById(id);
-            // 确保元素存在且类型正确
-            if (elem && elem.type === 'checkbox') {
-                // 如果 localStorage 中没有记录，则保持 HTML 中的默认值
-                // 只有当 localStorage 中明确记录为 true 或 false 时才覆盖
-                if (typeof savedSettings[id] === 'boolean') {
-                     elem.checked = savedSettings[id];
-                }
-            }
-        });
-        // 加载输出格式
-        const format = savedSettings.format || 'table'; // 默认 table
-        const formatRadio = document.querySelector(`input[name="format"][value="${format}"]`);
-        if (formatRadio) formatRadio.checked = true;
-
-        // 加载表头选项 (默认勾选在 HTML 中设置，这里根据保存的值覆盖)
-        const showHeaderCheckbox = document.getElementById('showHeader');
-        if (showHeaderCheckbox && typeof savedSettings.showHeader === 'boolean') {
-            showHeaderCheckbox.checked = savedSettings.showHeader;
-        } else if (showHeaderCheckbox && !savedSettings.hasOwnProperty('showHeader')) {
-             // 如果 localStorage 没有记录，则使用 HTML 的默认值 (checked)
-             showHeaderCheckbox.checked = true;
-        }
-
-        // 初始化时根据当前激活的 Tab 更新状态
-        const activeTabBtn = document.querySelector('.tab-btn.active');
-        if (activeTabBtn) {
-            const tabName = activeTabBtn.getAttribute('onclick').includes('repo') ? 'repo' : 'custom';
-            switchTab(tabName); // 确保 UI 状态正确
-        } else {
-            switchTab('repo'); // 默认激活 repo
-        }
-    }
-
-    // 保存当前设置到localStorage
-    function saveSettings() {
-        const settings = {
-            token: document.getElementById('githubToken').value.trim(),
-            format: document.querySelector('input[name="format"]:checked')?.value || 'table', // 安全获取
-            // 保存所有复选框的状态
-            showUser: document.getElementById('showUser')?.checked ?? false,
-            showStars: document.getElementById('showStars')?.checked ?? false,
-            showVersion: document.getElementById('showVersion')?.checked ?? false,
-            showDate: document.getElementById('showDate')?.checked ?? false,
-            showSize: document.getElementById('showSize')?.checked ?? false,
-            showLanguage: document.getElementById('showLanguage')?.checked ?? false,
-            showLicense: document.getElementById('showLicense')?.checked ?? false,
-            showDownloads: document.getElementById('showDownloads')?.checked ?? false,
-            showIssues: document.getElementById('showIssues')?.checked ?? false,
-            showBuild: document.getElementById('showBuild')?.checked ?? false,
-            showDocker: document.getElementById('showDocker')?.checked ?? false,
-            showFollowers: document.getElementById('showFollowers')?.checked ?? false,
-            showForks: document.getElementById('showForks')?.checked ?? false,
-            showWatchers: document.getElementById('showWatchers')?.checked ?? false,
-            showHeader: document.getElementById('showHeader')?.checked ?? true // 默认 true
-        };
-        localStorage.setItem('ghBadgeSettings', JSON.stringify(settings));
-        // 更新内存中的 savedToken
-        savedToken = settings.token;
-    }
-
-    // 给所有复选框、单选按钮添加事件监听器，在改变时自动保存设置
-    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
-        input.addEventListener('change', saveSettings);
-    });
-    // Token 输入框失去焦点时也保存设置
-    document.getElementById('githubToken').addEventListener('blur', saveSettings);
-
-    // 保存/更新 GitHub Token 按钮点击事件
-    function saveToken() {
-        saveSettings(); // 调用通用保存函数即可
-        // 给用户一个反馈
-        const btn = document.querySelector('.token-group button');
-        const originalText = btn.textContent;
-        btn.textContent = '已更新!';
-        setTimeout(() => { btn.textContent = originalText; }, 1500);
-    }
-
-    // 渲染Repo徽章结果
     function renderResults(results, output) {
         const format = document.querySelector('input[name="format"]:checked')?.value || 'table';
-        const showUser = document.getElementById('showUser')?.checked ?? false;
+        const style = document.getElementById('repoStyle')?.value || 'flat';
         const outputLines = [];
 
-        results.forEach(result => {
-            // 处理获取数据时发生的错误
-            if (result.error || !result.repoData) {
-                const errorMessage = result.error || '无法获取仓库信息';
-                const repoNameForLink = result.repo || '未知仓库'; // 即使失败也尝试显示仓库名
-                if (format === 'table') {
-                    outputLines.push([
-                        `[${repoNameForLink}](https://github.com/${repoNameForLink})`,
-                        `错误：${errorMessage}`,
-                        ''
-                    ]);
-                } else {
-                    outputLines.push(`- [${repoNameForLink}](https://github.com/${repoNameForLink}) - 错误：${errorMessage}`);
+        const gens = {
+            'showStars': (r, d) => `[![Stars](https://img.shields.io/github/stars/${r}?style=${style})](https://github.com/${r}/stargazers)`,
+            'showVersion': (r, d) => `[![Version](https://img.shields.io/github/v/tag/${r}?label=Version&sort=semver&style=${style})](https://github.com/${r}/tags)`,
+            'showDate': (r, d, res) => {
+                if (d.archived) {
+                    const date = d.pushed_at ? new Date(d.pushed_at).toISOString().split('T')[0].replace(/-/g, '--') : 'unknown';
+                    return `![Archived](https://img.shields.io/badge/Archived-${date}-red?style=${style})`;
                 }
+                if (res.latestReleaseExists) return `[![Release](https://img.shields.io/github/release-date/${r}?label=Release&style=${style})](https://github.com/${r}/releases)`;
+                const br = d.default_branch || 'main';
+                return `[![Commit](https://img.shields.io/github/last-commit/${r}/${br}?label=Commit&style=${style})](https://github.com/${r}/commits/${br})`;
+            },
+            'showLanguage': (r, d) => d.language ? `[![Language](https://img.shields.io/github/languages/top/${r}?style=${style})](https://github.com/${r}/search?l=${encodeURIComponent(d.language)})` : null,
+            'showLicense': (r, d) => (d.license?.spdx_id && d.license.spdx_id!='NOASSERTION') ? `[![License](https://img.shields.io/github/license/${r}?style=${style})](LICENSE)` : null,
+            'showDownloads': (r) => `[![Downloads](https://img.shields.io/github/downloads/${r}/total?style=${style})](https://github.com/${r}/releases)`,
+            'showIssues': (r) => `[![Issues](https://img.shields.io/github/issues/${r}?style=${style})](https://github.com/${r}/issues)`,
+            'showBuild': (r, d, res) => {
+                if(!res.buildStatus) return null;
+                let c = 'lightgrey', s = res.buildStatus;
+                if(s==='success') {c='brightgreen';s='passing'} else if(s==='failure') {c='red';s='failing'} else if(['queued','in_progress'].includes(s)) {c='yellow'}
+                return `[![Build](https://img.shields.io/badge/Build-${s}-${c}?style=${style})](https://github.com/${r}/actions)`;
+            },
+            'showSize': (r, d) => {
+                let sz = d.size, txt = sz>1048576 ? (sz/1048576).toFixed(2)+' GB' : sz>1024 ? (sz/1024).toFixed(2)+' MB' : sz+' KB';
+                return `![Size](https://img.shields.io/badge/Size-${encodeURIComponent(txt)}-blue?style=${style})`;
+            },
+            'showDocker': (r, d, res) => res.dockerRepo ? `[![Docker](https://img.shields.io/docker/pulls/${res.dockerRepo}?style=${style})](https://hub.docker.com/r/${res.dockerRepo.split('/_')[1]||res.dockerRepo})` : null,
+            'showFollowers': (r) => `[![Follow](https://img.shields.io/github/followers/${r.split('/')[0]}?label=Follow&style=${style})](https://github.com/${r.split('/')[0]})`,
+            'showForks': (r) => `[![Forks](https://img.shields.io/github/forks/${r}?style=${style})](https://github.com/${r}/network/members)`,
+            'showWatchers': (r) => `[![Watchers](https://img.shields.io/github/watchers/${r}?label=Watch&style=${style})](https://github.com/${r}/watchers)`,
+            'showUser': () => null
+        };
+
+        const showUser = document.getElementById('showUser').checked;
+
+        results.forEach(res => {
+            if (res.error || !res.repoData) {
+                outputLines.push(format==='table' ? [`[${res.repo}]`, `Error: ${res.error}`, ''] : `- [${res.repo}] Error: ${res.error}`);
                 return;
             }
-
-            // 成功获取数据的情况
-            const repo = result.repo;
-            const repoData = result.repoData;
-            const [user, repoName] = repo.split('/');
-            const displayName = showUser ? repo : repoName;
-            const badges = []; // 存储该仓库的所有徽章Markdown代码
-
-            // --- 生成各种徽章 ---
-            if (document.getElementById('showStars')?.checked) {
-                badges.push(`[![Stars](https://img.shields.io/github/stars/${repo}?style=flat)](https://github.com/${repo}/stargazers)`);
-            }
-            if (document.getElementById('showVersion')?.checked) {
-                badges.push(`[![Version](https://img.shields.io/github/v/tag/${repo}?label=Version&sort=semver&style=flat)](https://github.com/${repo}/tags)`); // 添加 sort=semver
-            }
-            if (document.getElementById('showDate')?.checked) {
-                if (repoData.archived) {
-                    const pushedAt = repoData.pushed_at || '';
-                    const lastCommitDate = pushedAt ? new Date(pushedAt).toISOString().split('T')[0].replace(/-/g, '--') : 'unknown';
-                    badges.push(`![Archived](https://img.shields.io/badge/Archived-${lastCommitDate}-red?style=flat)`);
-                } else if (result.latestReleaseExists) {
-                    badges.push(`[![Latest Release](https://img.shields.io/github/release-date/${repo}?label=Latest%20Release&style=flat)](https://github.com/${repo}/releases)`);
-                } else {
-                    // 确保 repoData.default_branch 存在
-                    const branch = repoData.default_branch || 'main'; // 回退到 main
-                    badges.push(`[![Last Commit](https://img.shields.io/github/last-commit/${repo}/${branch}?label=Last%20Commit&style=flat)](https://github.com/${repo}/commits/${branch})`);
+            const name = showUser ? res.repo : res.repoData.name;
+            const badges = [];
+            
+            document.querySelectorAll('#badgeContainer .badge-option').forEach(el => {
+                const id = el.dataset.id;
+                const chk = el.querySelector('input');
+                if(chk && chk.checked && gens[id]) {
+                    const code = gens[id](res.repo, res.repoData, res);
+                    if(code) badges.push(code);
                 }
-            }
-            if (document.getElementById('showSize')?.checked) {
-                const sizeKB = repoData.size;
-                let sizeDisplay = `${sizeKB} KB`;
-                if (sizeKB > 1024) sizeDisplay = `${(sizeKB / 1024).toFixed(2)} MB`;
-                if (sizeKB > 1024 * 1024) sizeDisplay = `${(sizeKB / (1024 * 1024)).toFixed(2)} GB`;
-                badges.push(`![Size](https://img.shields.io/badge/Size-${encodeURIComponent(sizeDisplay)}-blue?style=flat)`);
-            }
-            if (document.getElementById('showLanguage')?.checked && repoData.language) {
-                badges.push(`[![Language](https://img.shields.io/github/languages/top/${repo}?style=flat)](https://github.com/${repo}/search?l=${encodeURIComponent(repoData.language)})`);
-            }
-            if (document.getElementById('showLicense')?.checked && repoData.license?.spdx_id && repoData.license.spdx_id !== 'NOASSERTION') { // 检查 spdx_id
-                badges.push(`[![License](https://img.shields.io/github/license/${repo}?style=flat)](LICENSE)`); // 假设 LICENSE 文件存在
-            }
-            if (document.getElementById('showDownloads')?.checked) {
-                badges.push(`[![Downloads](https://img.shields.io/github/downloads/${repo}/total?style=flat)](https://github.com/${repo}/releases)`);
-            }
-            if (document.getElementById('showIssues')?.checked) {
-                badges.push(`[![Issues](https://img.shields.io/github/issues/${repo}?style=flat)](https://github.com/${repo}/issues)`);
-            }
-            if (document.getElementById('showBuild')?.checked && result.buildStatus) {
-                let color = 'lightgrey'; let statusText = result.buildStatus;
-                switch (result.buildStatus) {
-                    case 'success': color = 'brightgreen'; statusText = 'passing'; break;
-                    case 'failure': color = 'red'; statusText = 'failing'; break;
-                    case 'cancelled': color = 'grey'; break;
-                    case 'skipped': color = 'lightgrey'; break;
-                    case 'in_progress': case 'queued': case 'waiting': case 'pending': color = 'yellow'; break; // 覆盖更多进行中状态
-                }
-                badges.push(`[![Build Status](https://img.shields.io/badge/Build-${encodeURIComponent(statusText)}-${color}?style=flat)](https://github.com/${repo}/actions)`);
-            }
-            if (document.getElementById('showDocker')?.checked && result.dockerRepo) {
-                 // 对 user/_ (underscore) 的官方镜像做特殊处理
-                 let dockerLinkRepo = result.dockerRepo;
-                 if (result.dockerRepo.includes('/_')) {
-                     dockerLinkRepo = result.dockerRepo.split('/')[1]; // 如 library/nginx -> nginx
-                 }
-                 badges.push(`[![Docker Pulls](https://img.shields.io/docker/pulls/${result.dockerRepo}?style=flat)](https://hub.docker.com/r/${dockerLinkRepo})`);
-            }
-            if (document.getElementById('showFollowers')?.checked) {
-                badges.push(`[![Followers](https://img.shields.io/github/followers/${user}?label=Follow&style=flat)](https://github.com/${user})`);
-            }
-            if (document.getElementById('showForks')?.checked) {
-                badges.push(`[![Forks](https://img.shields.io/github/forks/${repo}?style=flat)](https://github.com/${repo}/network/members)`);
-            }
-            if (document.getElementById('showWatchers')?.checked) {
-                badges.push(`[![Watchers](https://img.shields.io/github/watchers/${repo}?label=Watch&style=flat)](https://github.com/${repo}/watchers)`);
-            }
+            });
 
-            // --- 根据输出格式组装行 ---
             if (format === 'list') {
-                // **列表格式：每个徽章占一行，带缩进**
-                outputLines.push(`- [${displayName}](https://github.com/${repo})`);
-                badges.forEach(badge => outputLines.push(`  ${badge}`)); // 正确的列表逻辑
+                outputLines.push(`- [${name}](https://github.com/${res.repo})`);
+                badges.forEach(b => outputLines.push(`  ${b}`));
             } else {
-                // **表格格式：徽章之间用 <br> 分隔，尝试在单元格内换行**
-                const badgeHtml = badges.join('<br>'); // 使用 <br> 分隔
-                outputLines.push([
-                    `[${displayName}](https://github.com/${repo})`,
-                    badgeHtml,
-                    '' // 说明列，可留空或后续添加内容
-                ]);
+                outputLines.push([`[${name}](https://github.com/${res.repo})`, badges.join('<br>'), '']);
             }
         });
 
-        // --- 生成最终的Markdown文本 ---
         if (format === 'table') {
-            const showHeader = document.getElementById('showHeader')?.checked ?? true; // 默认显示表头
-            let markdown = '';
-            if (showHeader) {
-                markdown += `| 项目 | 徽章 | 说明 |\n`;
-                markdown += `|------|------|------|\n`;
+            let md = '';
+            // 只有当复选框未被禁用且被勾选时，才生成表头
+            const showHeader = document.getElementById('showHeader');
+            if (!showHeader.disabled && showHeader.checked) {
+                md += `| Project | Badges | Note |\n|---|---|---|\n`;
             }
             outputLines.forEach(row => {
-                if (Array.isArray(row)) {
-                    // 对徽章列内容进行简单清理，避免过多空行 (如果<br>导致)
-                    const badgeCellContent = row[1].replace(/(<br>\s*){2,}/g, '<br>'); // 移除连续的<br>
-                    markdown += `| ${row[0]} | ${badgeCellContent} | ${row[2]} |\n`;
-                }
+                if(Array.isArray(row)) md += `| ${row[0]} | ${row[1]} | ${row[2]} |\n`;
             });
-            output.value = markdown.trim();
+            output.value = md.trim();
         } else {
             output.value = outputLines.join('\n');
         }
     }
 
-    // 复制内容到剪贴板
-    function copyContent(type) {
-        const output = type === 'repo' ? document.getElementById('outputRepo') : document.getElementById('outputCustom');
-        if (!output || output.value === '') return; // 增加检查
-        output.select();
-        output.setSelectionRange(0, 99999); // For mobile devices
-        try {
-            document.execCommand('copy');
-            const copySuccess = document.getElementById('copySuccess');
-            copySuccess.textContent = '内容已复制到剪贴板！';
-            copySuccess.classList.remove('hidden');
-            setTimeout(() => {
-                copySuccess.classList.add('hidden');
-            }, 2000);
-        } catch (err) {
-            showError('复制失败，您的浏览器可能不支持或权限不足。请手动复制。');
-            console.error('无法复制内容: ', err);
+    function saveSettings() {
+        const order = Array.from(document.querySelectorAll('#badgeContainer .badge-option')).map(el => el.dataset.id);
+        const settings = {
+            token: document.getElementById('githubToken').value.trim(),
+            format: document.querySelector('input[name="format"]:checked').value,
+            repoStyle: document.getElementById('repoStyle').value,
+            showHeader: document.getElementById('showHeader').checked,
+            order: order
+        };
+        document.querySelectorAll('#badgeContainer input').forEach(c => settings[c.id] = c.checked);
+        localStorage.setItem('ghBadgeSettings', JSON.stringify(settings));
+        savedToken = settings.token;
+    }
+
+    function loadSettings() {
+        const s = JSON.parse(localStorage.getItem('ghBadgeSettings')) || {};
+        if(s.token) { document.getElementById('githubToken').value = s.token; savedToken = s.token; }
+        if(s.format) document.querySelector(`input[name="format"][value="${s.format}"]`).checked = true;
+        if(s.repoStyle) document.getElementById('repoStyle').value = s.repoStyle;
+        if(typeof s.showHeader === 'boolean') document.getElementById('showHeader').checked = s.showHeader;
+        
+        if(s.order) {
+            const container = document.getElementById('badgeContainer');
+            const map = {};
+            container.querySelectorAll('.badge-option').forEach(el => map[el.dataset.id] = el);
+            s.order.forEach(id => { if(map[id]) container.appendChild(map[id]); });
         }
-        // 取消选择
-        window.getSelection()?.removeAllRanges(); // 安全调用
-        output.blur(); // 移除焦点
+        document.querySelectorAll('#badgeContainer input').forEach(c => {
+            if(typeof s[c.id] === 'boolean') c.checked = s[c.id];
+        });
+        
+        updateUIState();
     }
 
-    // 显示错误消息
-    function showError(message) {
-        const errorMsg = document.getElementById('errorMsg');
-        errorMsg.textContent = `错误：${message}`;
-        errorMsg.classList.remove('hidden');
-        // 可以设置一个定时器自动隐藏错误消息
-        // setTimeout(() => { errorMsg.classList.add('hidden'); }, 5000);
+    function saveToken() { saveSettings(); alert('Token 已保存到本地存储！'); }
+    
+    function copyContent(type) {
+        const el = document.getElementById(type==='repo'?'outputRepo':'outputCustom');
+        el.select(); el.setSelectionRange(0,99999);
+        navigator.clipboard.writeText(el.value).then(() => {
+            const msg = document.getElementById('copySuccess');
+            msg.classList.remove('hidden'); setTimeout(()=>msg.classList.add('hidden'), 2000);
+        });
     }
 
-    // 初始化加载
-    document.addEventListener('DOMContentLoaded', loadSavedSettings); // 确保 DOM 加载完毕
-
+    document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', saveSettings));
+    document.addEventListener('DOMContentLoaded', () => { loadSettings(); initDragAndDrop(); });
 </script>
 </body>
 </html>
